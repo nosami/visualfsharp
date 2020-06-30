@@ -11,7 +11,7 @@ open Microsoft.CodeAnalysis.Completion
 open Microsoft.CodeAnalysis.ExternalAccess.FSharp.Completion
 open System.Globalization
 open FSharp.Compiler.SourceCodeServices
-
+open Microsoft.VisualStudio.Text
 module internal CompletionUtils =
 
     let private isLetterChar (cat: UnicodeCategory) =
@@ -111,3 +111,34 @@ module internal CompletionUtils =
         | CompletionItemKind.Argument -> 5
         | CompletionItemKind.Other -> 6
         | CompletionItemKind.Method (isExtension = true) -> 7
+
+    let getCompletionItemSpan (sourceText: SourceText) position =
+        let rec findStart index =
+            let c = sourceText.[index-1]
+            match isIdentifierStartCharacter c with
+            | true when index > 1 ->
+                findStart (index-1)
+            | _ -> index
+
+        // If we're brought up in the middle of a word, extend to the end of the word as well.
+        // This means that if a user brings up the completion list at the start of the word they
+        // will "insert" the text before what's already there (useful for qualifying existing
+        // text).  However, if they bring up completion in the "middle" of a word, then they will
+        // "overwrite" the text. Useful for correcting misspellings or just replacing unwanted
+        // code with new code.
+        let rec findEnd index =
+            let c = sourceText.[index]
+            match isIdentifierStartCharacter c with
+            | true when index < sourceText.Length ->
+                findEnd (index+1)
+            | _ -> index
+
+        let start = findStart position
+
+        let endIndex =
+            if start <> position && position < sourceText.Length then
+                findEnd position
+            else
+                position
+
+        Span.FromBounds(start, endIndex)

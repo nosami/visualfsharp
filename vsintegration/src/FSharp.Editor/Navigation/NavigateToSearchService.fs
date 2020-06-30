@@ -7,18 +7,12 @@ open System.IO
 open System.Composition
 open System.Collections.Generic
 open System.Collections.Immutable
-open System.Threading
 open System.Threading.Tasks
-open System.Runtime.CompilerServices
 open System.Runtime.Caching
 open System.Globalization
 
 open Microsoft.CodeAnalysis
-open Microsoft.CodeAnalysis.Host.Mef
 open Microsoft.CodeAnalysis.Text
-open Microsoft.CodeAnalysis.NavigateTo
-open Microsoft.CodeAnalysis.Navigation
-open Microsoft.CodeAnalysis.PatternMatching
 open Microsoft.CodeAnalysis.ExternalAccess.FSharp.Navigation
 open Microsoft.CodeAnalysis.ExternalAccess.FSharp.NavigateTo
 
@@ -218,40 +212,40 @@ type internal FSharpNavigateToSearchService
                 itemsByDocumentId.Set(cacheItem, policy)
                 return indexedItems }
 
-    let patternMatchKindToNavigateToMatchKind = function
-        | PatternMatchKind.Exact -> FSharpNavigateToMatchKind.Exact
-        | PatternMatchKind.Prefix -> FSharpNavigateToMatchKind.Prefix
-        | PatternMatchKind.Substring -> FSharpNavigateToMatchKind.Substring
-        | PatternMatchKind.CamelCase -> FSharpNavigateToMatchKind.Regular
-        | PatternMatchKind.Fuzzy -> FSharpNavigateToMatchKind.Regular
+    let _patternMatchKindToNavigateToMatchKind = function
+        //| PatternMatchKind.Exact -> FSharpNavigateToMatchKind.Exact
+        //| PatternMatchKind.Prefix -> FSharpNavigateToMatchKind.Prefix
+        //| PatternMatchKind.Substring -> FSharpNavigateToMatchKind.Substring
+        //| PatternMatchKind.CamelCase -> FSharpNavigateToMatchKind.Regular
+        //| PatternMatchKind.Fuzzy -> FSharpNavigateToMatchKind.Regular
         | _ -> FSharpNavigateToMatchKind.Regular
 
     interface IFSharpNavigateToSearchService with
-        member __.SearchProjectAsync(project, _priorityDocuments, searchPattern, kinds, cancellationToken) : Task<ImmutableArray<FSharpNavigateToSearchResult>> =
+        member __.SearchProjectAsync(project, _priorityDocuments, _searchPattern, kinds, cancellationToken) : Task<ImmutableArray<FSharpNavigateToSearchResult>> =
             asyncMaybe {
                 let! parsingOptions, _options = projectInfoManager.TryGetOptionsByProject(project, cancellationToken)
-                let! items =
+                let! _items =
                     project.Documents
                     |> Seq.map (fun document -> getCachedIndexedNavigableItems(document, parsingOptions, kinds))
                     |> Async.Parallel
                     |> liftAsync
-                
-                let items =
-                    if searchPattern.Length = 1 then
-                        items 
-                        |> Array.map (fun items -> items.Find(searchPattern))
-                        |> Array.concat
-                        |> Array.filter (fun x -> x.Name.Length = 1 && String.Equals(x.Name, searchPattern, StringComparison.InvariantCultureIgnoreCase))
-                    else
-                        [| yield! items |> Array.map (fun items -> items.Find(searchPattern)) |> Array.concat
-                           use patternMatcher = new PatternMatcher(searchPattern, allowFuzzyMatching = true)
-                           yield! items
-                                  |> Array.collect (fun item -> item.AllItems)
-                                  |> Array.Parallel.collect (fun x -> 
-                                      patternMatcher.GetMatches(x.Name)
-                                      |> Seq.map (fun pm ->
-                                          NavigateToSearchResult(x, patternMatchKindToNavigateToMatchKind pm.Kind) :> FSharpNavigateToSearchResult)
-                                      |> Seq.toArray) |]
+
+                let items = Array.Empty<FSharpNavigateToSearchResult>()
+                    //if searchPattern.Length = 1 then
+                    //    items 
+                    //    |> Array.map (fun items -> items.Find(searchPattern))
+                    //    |> Array.concat
+                    //    |> Array.filter (fun x -> x.Name.Length = 1 && String.Equals(x.Name, searchPattern, StringComparison.InvariantCultureIgnoreCase))
+                    //else
+                        //[| yield! items |> Array.map (fun items -> items.Find(searchPattern)) |> Array.concat
+                           //use patternMatcher = new PatternMatcher(searchPattern, allowFuzzyMatching = true)
+                           //yield! items
+                                  //|> Array.collect (fun item -> item.AllItems)
+                                  //|> Array.Parallel.collect (fun x -> 
+                                      //patternMatcher.GetMatches(x.Name)
+                                      //|> Seq.map (fun pm ->
+                                      //    NavigateToSearchResult(x, patternMatchKindToNavigateToMatchKind pm.Kind) :> FSharpNavigateToSearchResult)
+                                      //|> Seq.toArray) |]
 
                 return items |> Array.distinctBy (fun x -> x.NavigableItem.Document.Id, x.NavigableItem.SourceSpan)
             } 

@@ -12,17 +12,15 @@ open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.Text
 
 open Microsoft.VisualStudio.Language.Intellisense
-open Microsoft.VisualStudio.Shell
-open Microsoft.VisualStudio.Shell.Interop
 open Microsoft.VisualStudio.Text
-open Microsoft.VisualStudio.Utilities
 
 open FSharp.Compiler.SourceCodeServices
 open FSharp.Compiler.Range
 open FSharp.Compiler
 
 open Internal.Utilities.StructuredFormat
-
+open Microsoft.CodeAnalysis.ExternalAccess.FSharp.Completion
+open Microsoft.CodeAnalysis.ExternalAccess.FSharp.Editor
 type internal QuickInfo =
     { StructuredText: FSharpStructuredToolTipText
       Span: TextSpan
@@ -160,7 +158,6 @@ module internal FSharpQuickInfo =
 type internal FSharpAsyncQuickInfoSource
     (
         statusBar: StatusBar,
-        xmlMemberIndexService: IVsXMLMemberIndexService,
         checkerProvider:FSharpCheckerProvider,
         projectInfoManager:FSharpProjectOptionsManager,
         textBuffer:ITextBuffer,
@@ -215,7 +212,7 @@ type internal FSharpAsyncQuickInfoSource
             | false -> Task.FromResult<QuickInfoItem>(null)
             | true ->
                 let triggerPoint = triggerPoint.GetValueOrDefault()
-                let documentationBuilder = XmlDocumentation.CreateDocumentationBuilder(xmlMemberIndexService)
+                let documentationBuilder = XmlDocumentation.CreateDocumentationBuilder((*xmlMemberIndexService*))
                 asyncMaybe {
                     let document = textBuffer.CurrentSnapshot.GetOpenDocumentInCurrentContextWithChanges()
                     let! symbolUse, sigQuickInfo, targetQuickInfo = FSharpQuickInfo.getQuickInfo(checkerProvider.Checker, projectInfoManager, document, triggerPoint.Position, cancellationToken)
@@ -233,9 +230,8 @@ type internal FSharpAsyncQuickInfoSource
                         let span = getTrackingSpan quickInfo.Span
                         return QuickInfoItem(span, content)
 
-                    | Some sigQuickInfo, Some targetQuickInfo ->
+                    | Some _sigQuickInfo, Some targetQuickInfo ->
                         let mainDescription, targetDocumentation, sigDocumentation, typeParameterMap, exceptions, usage = ResizeArray(), ResizeArray(), ResizeArray(), ResizeArray(), ResizeArray(), ResizeArray()
-                        XmlDocumentation.BuildDataTipText(documentationBuilder, ignore, sigDocumentation.Add, ignore, ignore, ignore, sigQuickInfo.StructuredText)
                         XmlDocumentation.BuildDataTipText(documentationBuilder, mainDescription.Add, targetDocumentation.Add, typeParameterMap.Add, exceptions.Add, usage.Add, targetQuickInfo.StructuredText)
                         // get whitespace nomalized documentation text
                         let getText (tts: seq<Layout.TaggedText>) =
@@ -266,22 +262,20 @@ type internal FSharpAsyncQuickInfoSource
                     |> RoslynHelpers.StartAsyncAsTask cancellationToken
 
 [<Export(typeof<IAsyncQuickInfoSourceProvider>)>]
-[<Name("F# Quick Info Provider")>]
-[<ContentType(FSharpConstants.FSharpLanguageName)>]
-[<Order>]
+[<Microsoft.VisualStudio.Utilities.Name("F# Quick Info Provider")>]
+[<Microsoft.VisualStudio.Utilities.ContentType(FSharpContentTypeNames.FSharpContentType)>]
+[<Microsoft.VisualStudio.Utilities.Order>]
 type internal FSharpAsyncQuickInfoSourceProvider
     [<ImportingConstructor>]
     (
-        [<Import(typeof<SVsServiceProvider>)>] serviceProvider: IServiceProvider,
         checkerProvider:FSharpCheckerProvider,
         projectInfoManager:FSharpProjectOptionsManager,
         settings: EditorOptions
     ) =
 
     interface IAsyncQuickInfoSourceProvider with
-        override __.TryCreateQuickInfoSource(textBuffer:ITextBuffer) : IAsyncQuickInfoSource =
+        override __.TryCreateQuickInfoSource(textBuffer) =
             // GetService calls must be made on the UI thread
             // It is safe to do it here (see #4713)
-            let statusBar = StatusBar(serviceProvider.GetService<SVsStatusbar,IVsStatusbar>())
-            let xmlMemberIndexService = serviceProvider.XMLMemberIndexService
-            new FSharpAsyncQuickInfoSource(statusBar, xmlMemberIndexService, checkerProvider, projectInfoManager, textBuffer, settings) :> IAsyncQuickInfoSource
+            let statusBar = StatusBar()
+            new FSharpAsyncQuickInfoSource(statusBar, checkerProvider, projectInfoManager, textBuffer, settings) :> _

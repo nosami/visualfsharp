@@ -62,7 +62,17 @@ type internal FSharpDocumentDiagnosticAnalyzer [<ImportingConstructor>] () =
     static member GetDiagnostics(checker: FSharpChecker, filePath: string, sourceText: SourceText, textVersionHash: int, parsingOptions: FSharpParsingOptions, options: FSharpProjectOptions, diagnosticType: DiagnosticsType) = 
         async {
             let fsSourceText = sourceText.ToFSharpSourceText()
-            let! parseResults = checker.ParseFile(filePath, fsSourceText, parsingOptions, userOpName=userOpName) 
+
+            let! parseResults =
+                try
+                    checker.ParseFile(filePath, fsSourceText, parsingOptions, userOpName=userOpName)
+                with
+                | :? StackOverflowException as e ->
+                    LoggingService.logError "%s" (e.ToString())
+                    LoggingService.logError "StackOverflow while parsing %s" filePath
+                    failwithf "StackOverflow parsing %s" filePath
+
+
             let! errors = 
                 async {
                     match diagnosticType with

@@ -4,14 +4,15 @@ module Microsoft.VisualStudio.FSharp.Editor.Pervasive
 open System
 open System.IO
 open System.Diagnostics
+open System.Threading.Tasks
 
 /// Checks if the filePath ends with ".fsi"
-let isSignatureFile (filePath:string) = 
+let isSignatureFile (filePath:string) =
     String.Equals (Path.GetExtension filePath, ".fsi", StringComparison.OrdinalIgnoreCase)
 
 /// Checks if the file paht ends with '.fsx' or '.fsscript'
-let isScriptFile (filePath:string) = 
-    let ext = Path.GetExtension filePath 
+let isScriptFile (filePath:string) =
+    let ext = Path.GetExtension filePath
     String.Equals (ext, ".fsx", StringComparison.OrdinalIgnoreCase) || String.Equals (ext, ".fsscript", StringComparison.OrdinalIgnoreCase)
 
 type internal ISetThemeColors = abstract member SetColors: unit -> unit
@@ -168,7 +169,7 @@ let asyncMaybe = AsyncMaybeBuilder()
 let inline liftAsync (computation : Async<'T>) : Async<'T option> =
     async {
         let! a = computation
-        return Some a 
+        return Some a
     }
 
 let liftTaskAsync task = task |> Async.AwaitTask |> liftAsync
@@ -180,7 +181,7 @@ module Async =
             return f a
         }
 
-    /// Creates an asynchronous workflow that runs the asynchronous workflow given as an argument at most once. 
+    /// Creates an asynchronous workflow that runs the asynchronous workflow given as an argument at most once.
     /// When the returned workflow is started for the second time, it reuses the result of the previous execution.
     let cache (input : Async<'T>) =
         let agent = MailboxProcessor<AsyncReplyChannel<_>>.Start <| fun agent ->
@@ -190,6 +191,18 @@ module Async =
                 replyCh.Reply res
                 while true do
                     let! replyCh = agent.Receive ()
-                    replyCh.Reply res 
+                    replyCh.Reply res
             }
         async { return! agent.PostAndAsyncReply id }
+
+    let inline awaitPlainTask (task: Task) = 
+        task.ContinueWith (fun task -> if task.IsFaulted then raise task.Exception)
+        |> Async.AwaitTask
+
+[<AutoOpen>]
+module AsyncTaskBind =
+    type Microsoft.FSharp.Control.AsyncBuilder with
+        member x.Bind(computation:Task<'T>, binder:'T -> Async<'R>) =  x.Bind(Async.AwaitTask computation, binder)
+        member x.ReturnFrom(computation:Task<'T>) = x.ReturnFrom(Async.AwaitTask computation)
+        member x.Bind(computation:Task, binder:unit -> Async<unit>) =  x.Bind(Async.awaitPlainTask computation, binder)
+        member x.ReturnFrom(computation:Task) = x.ReturnFrom(Async.awaitPlainTask computation)

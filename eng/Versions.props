@@ -4,10 +4,10 @@
     <UsingToolXUnit>false</UsingToolXUnit>
     <!-- opt-in properties -->
     <UsingToolNetFrameworkReferenceAssemblies>true</UsingToolNetFrameworkReferenceAssemblies>
-    <UsingToolNuGetRepack>true</UsingToolNuGetRepack>
-    <UsingToolSourceLink>true</UsingToolSourceLink>
-    <UsingToolSymbolUploader>true</UsingToolSymbolUploader>
-    <UsingToolVSSDK>true</UsingToolVSSDK>
+    <!-- <UsingToolNuGetRepack>true</UsingToolNuGetRepack> -->
+    <!-- <UsingToolSourceLink>true</UsingToolSourceLink> -->
+    <!-- <UsingToolSymbolUploader>true</UsingToolSymbolUploader> -->
+    <!-- <UsingToolVSSDK>true</UsingToolVSSDK> -->
   </PropertyGroup>
   <!-- Version number computation -->
   <PropertyGroup>

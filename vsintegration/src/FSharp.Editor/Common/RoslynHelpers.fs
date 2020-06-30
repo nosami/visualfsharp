@@ -18,7 +18,7 @@ open Microsoft.VisualStudio.FSharp.Editor.Logging
 open Microsoft.CodeAnalysis.ExternalAccess.FSharp.Diagnostics
 
 [<RequireQualifiedAccess>]
-module internal RoslynHelpers =
+module RoslynHelpers =
 
     let FSharpRangeToTextSpan(sourceText: SourceText, range: range) =
         // Roslyn TextLineCollection is zero-based, F# range lines are one-based
@@ -117,6 +117,7 @@ module internal RoslynHelpers =
                           tcs.TrySetCanceled(cancellationToken)  |> ignore
                       | exn ->
                           System.Diagnostics.Trace.WriteLine("Visual F# Tools: exception swallowed and not passed to Roslyn: {0}", exn.Message)
+                          System.Diagnostics.Trace.WriteLine(exn.StackTrace)
                           let res = Unchecked.defaultof<_>
                           tcs.TrySetResult(res) |> ignore
                   ),

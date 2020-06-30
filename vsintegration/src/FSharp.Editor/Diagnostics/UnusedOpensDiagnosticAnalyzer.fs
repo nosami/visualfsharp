@@ -46,6 +46,13 @@ type internal UnusedOpensDiagnosticAnalyzer [<ImportingConstructor>] () =
     interface IFSharpUnusedOpensDiagnosticAnalyzer with
 
         member this.AnalyzeSemanticsAsync(descriptor, document: Document, cancellationToken: CancellationToken) =
+            let isOpen =
+                MonoDevelop.Ide.IdeApp.Workbench.Documents
+                |> Seq.exists(fun d -> d.FilePath |> string = document.FilePath)
+
+            if not isOpen then
+                Task.FromResult ImmutableArray.Empty
+            else
             asyncMaybe {
                 do Trace.TraceInformation("{0:n3} (start) UnusedOpensAnalyzer", DateTime.Now.TimeOfDay.TotalSeconds)
                 do! Async.Sleep DefaultTuning.UnusedOpensAnalyzerInitialDelay |> liftAsync // be less intrusive, give other work priority most of the time

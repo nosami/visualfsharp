@@ -21,7 +21,7 @@ type internal UnusedDeclarationsAnalyzer [<ImportingConstructor>] () =
     static let userOpName = "UnusedDeclarationsAnalyzer"
     let getProjectInfoManager (document: Document) = document.Project.Solution.Workspace.Services.GetService<FSharpCheckerWorkspaceService>().FSharpProjectOptionsManager
     let getChecker (document: Document) = document.Project.Solution.Workspace.Services.GetService<FSharpCheckerWorkspaceService>().Checker
-    
+     
     let isPotentiallyUnusedDeclaration (symbol: FSharpSymbol) : bool =
         match symbol with
         // Determining that a record, DU or module is used anywhere requires inspecting all their enclosed entities (fields, cases and func / vals)

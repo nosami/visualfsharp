@@ -159,7 +159,6 @@ type internal InlineRenameService
             let! _, _, checkFileResults = checker.ParseAndCheckDocument(document, options, userOpName = userOpName)
             let! symbolUse = checkFileResults.GetSymbolUseAtLocation(fcsTextLineNumber, symbol.Ident.idRange.EndColumn, textLine.Text.ToString(), symbol.FullIsland, userOpName=userOpName)
             let! declLoc = symbolUse.GetDeclarationLocation(document)
-
             let! span = RoslynHelpers.TryFSharpRangeToTextSpan(sourceText, symbolUse.RangeAlternate)
             let triggerSpan = Tokenizer.fixupSpan(sourceText, span)
 

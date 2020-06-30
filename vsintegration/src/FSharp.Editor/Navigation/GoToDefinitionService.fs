@@ -2,18 +2,12 @@
 
 namespace Microsoft.VisualStudio.FSharp.Editor
 
-open System.Composition
 open System.Threading
-open System.Threading.Tasks
 
 open Microsoft.CodeAnalysis
-open Microsoft.CodeAnalysis.Editor
-open Microsoft.CodeAnalysis.Host.Mef
 open Microsoft.CodeAnalysis.ExternalAccess.FSharp.Editor
 
-open Microsoft.VisualStudio.Shell
-open Microsoft.VisualStudio.Shell.Interop
-open System
+open System.ComponentModel.Composition;
 
 [<Export(typeof<IFSharpGoToDefinitionService>)>]
 [<Export(typeof<FSharpGoToDefinitionService>)>]
@@ -25,7 +19,7 @@ type internal FSharpGoToDefinitionService
     ) =
 
     let gtd = GoToDefinition(checkerProvider.Checker, projectInfoManager)
-    let statusBar = StatusBar(ServiceProvider.GlobalProvider.GetService<SVsStatusbar,IVsStatusbar>())  
+    let statusBar = StatusBar()  
    
     interface IFSharpGoToDefinitionService with
         /// Invoked with Peek Definition.
@@ -35,28 +29,19 @@ type internal FSharpGoToDefinitionService
         /// Invoked with Go to Definition.
         /// Try to navigate to the definiton of the symbol at the symbolRange in the originDocument
         member __.TryGoToDefinition(document: Document, position: int, cancellationToken: CancellationToken) =
-            statusBar.Message(SR.LocatingSymbol())
-            use __ = statusBar.Animate()
+            let computation =
+                async {
+                
+                    statusBar.Message(SR.LocatingSymbol())
+                    use __ = statusBar.Animate()
 
-            let gtdTask = gtd.FindDefinitionTask(document, position, cancellationToken)
+                    let! position  = gtd.FindDefinitionAtPosition(document, position)
 
-            // Wrap this in a try/with as if the user clicks "Cancel" on the thread dialog, we'll be cancelled.
-            // Task.Wait throws an exception if the task is cancelled, so be sure to catch it.
-            try
-                // This call to Wait() is fine because we want to be able to provide the error message in the status bar.
-                gtdTask.Wait()
-                if gtdTask.Status = TaskStatus.RanToCompletion && gtdTask.Result.IsSome then
-                    let item, _ = gtdTask.Result.Value
-                    gtd.NavigateToItem(item, statusBar)
-
-                    // 'true' means do it, like Sheev Palpatine would want us to.
-                    true
-                else 
-                    statusBar.TempMessage (SR.CannotDetermineSymbol())
-                    false
-            with exc -> 
-                statusBar.TempMessage(String.Format(SR.NavigateToFailed(), Exception.flattenMessage exc))
-
-                // Don't show the dialog box as it's most likely that the user cancelled.
-                // Don't make them click twice.
-                true
+                    match position with
+                    | Some (item, _) ->
+                        gtd.NavigateToItem(item, statusBar)
+                    | None ->
+                        statusBar.TempMessage (SR.CannotDetermineSymbol())
+                }
+            Async.StartImmediate(computation, cancellationToken)
+            true

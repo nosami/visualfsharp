@@ -2,9 +2,7 @@
 
 namespace Microsoft.VisualStudio.FSharp.Editor
 
-open System.Threading
 open System.Collections.Immutable
-open System.Composition
 
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.ExternalAccess.FSharp
@@ -13,6 +11,8 @@ open Microsoft.CodeAnalysis.ExternalAccess.FSharp.Editor.FindUsages
 
 open FSharp.Compiler.Range
 open FSharp.Compiler.SourceCodeServices
+
+open System.ComponentModel.Composition;
 
 [<Export(typeof<IFSharpFindUsagesService>)>]
 type internal FSharpFindUsagesService
@@ -133,4 +133,3 @@ type internal FSharpFindUsagesService
         member __.FindImplementationsAsync(document, position, context) =
             findReferencedSymbolsAsync(document, position, context, false, userOpName)
             |> RoslynHelpers.StartAsyncUnitAsTask(context.CancellationToken)
- 

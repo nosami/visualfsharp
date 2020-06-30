@@ -32,6 +32,7 @@ type internal FSharpLanguageDebugInfoService [<ImportingConstructor>](projectInf
             | ClassificationTypeNames.StringLiteral ->
                 Some(token.TextSpan)
         
+            | ClassificationTypeNames.LocalName
             | ClassificationTypeNames.Identifier ->
                 let textLine = sourceText.Lines.GetLineFromPosition(position)
                 let textLinePos = sourceText.Lines.GetLinePosition(position)

@@ -75,7 +75,7 @@ module internal QuickInfoViewProvider =
                 match item with
                 | :? Layout.NavigableTaggedText as nav when navigation.IsTargetValid nav.Range ->
                     flushRuns()
-                    let navigableTextRun = NavigableTextRun(classificationTag, item.Text, fun () -> navigation.NavigateTo nav.Range)
+                    let navigableTextRun = ClassifiedTextElement.CreateHyperlink(item.Text, "Navigate to " + item.Text, fun() -> navigation.NavigateTo nav.Range)
                     currentContainerItems.Add(navigableTextRun :> obj)
                 | _ when item.Tag = LineBreak ->
                     flushRuns()

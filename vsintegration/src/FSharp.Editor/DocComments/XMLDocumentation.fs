@@ -5,12 +5,20 @@ namespace Microsoft.VisualStudio.FSharp.Editor
 open System
 open System.Runtime.CompilerServices
 open System.Text.RegularExpressions
-open Microsoft.VisualStudio.Shell
-open Microsoft.VisualStudio.Shell.Interop
 open FSharp.Compiler.SourceCodeServices
 open FSharp.Compiler.Layout
 open FSharp.Compiler.Layout.TaggedTextOps
 open System.Collections.Generic
+open System.IO
+open System.Threading
+open Microsoft.CodeAnalysis.Text;
+open Microsoft.CodeAnalysis.Text.Shared.Extensions;
+open Microsoft.VisualStudio.Core.Imaging;
+open Microsoft.VisualStudio.Language.Intellisense.AsyncCompletion;
+open Microsoft.VisualStudio.Text;
+open Microsoft.VisualStudio.Text.Adornments;
+open Microsoft.VisualStudio.Text.Editor;
+open System.Collections.Immutable
 
 type internal ITaggedTextCollector =
     abstract Add: text: TaggedText -> unit
@@ -84,6 +92,83 @@ type internal IDocumentationBuilder =
 /// Documentation helpers.
 module internal XmlDocumentation =
     open System.Security
+    open System.Collections.Generic
+    open Internal.Utilities.StructuredFormat
+    open Microsoft.CodeAnalysis.Classification
+    open FSharp.Compiler
+    open Microsoft.VisualStudio.Core.Imaging
+    open Microsoft.VisualStudio.Language.StandardClassification
+    open Microsoft.VisualStudio.Text.Adornments
+    let layoutTagToClassificationTag (layoutTag:LayoutTag) =
+        match layoutTag with
+        | ActivePatternCase
+        | ActivePatternResult
+        | UnionCase
+        | Enum -> ClassificationTypeNames.EnumName // Roslyn-style classification name
+        | Alias
+        | Class
+        | Module
+        | Record
+        | Struct
+        | TypeParameter
+        | Union
+        | UnknownType -> PredefinedClassificationTypeNames.Type
+        | Interface -> ClassificationTypeNames.InterfaceName // Roslyn-style classification name
+        | Keyword -> PredefinedClassificationTypeNames.Keyword
+        | Delegate
+        | Event
+        | Field
+        | Local
+        | Member
+        | Method
+        | ModuleBinding
+        | Namespace
+        | Parameter
+        | Property
+        | RecordField -> PredefinedClassificationTypeNames.Identifier
+        | LineBreak
+        | Space -> PredefinedClassificationTypeNames.WhiteSpace
+        | NumericLiteral -> PredefinedClassificationTypeNames.Number
+        | Operator -> PredefinedClassificationTypeNames.Operator
+        | StringLiteral -> PredefinedClassificationTypeNames.String
+        | Punctuation
+        | Text
+        | UnknownEntity -> PredefinedClassificationTypeNames.Other
+
+    let buildContainerElement (itemGroup:ImmutableArray<Layout.TaggedText>) =
+        let finalCollection = List<ContainerElement>()
+        let currentContainerItems = List<obj>()
+        let runsCollection = List<ClassifiedTextRun>()
+        let flushRuns() =
+            if runsCollection.Count > 0 then
+                let element = ClassifiedTextElement(runsCollection)
+                currentContainerItems.Add(element :> obj)
+                runsCollection.Clear()
+        let flushContainer() =
+            if currentContainerItems.Count > 0 then
+                let element = ContainerElement(ContainerElementStyle.Wrapped, currentContainerItems)
+                finalCollection.Add(element)
+                currentContainerItems.Clear()
+        for item in itemGroup do
+            let classificationTag = layoutTagToClassificationTag item.Tag
+            match item with
+            //| :? NavigableTaggedText as nav when navigation.IsTargetValid nav.Range ->
+                //flushRuns()
+                //let navigableTextRun = NavigableTextRun(classificationTag, item.Text, fun () -> navigation.NavigateTo nav.Range)
+                //currentContainerItems.Add(navigableTextRun :> obj)
+            | _ when item.Tag = LineBreak ->
+                flushRuns()
+                // preserve succesive linebreaks
+                if currentContainerItems.Count = 0 then
+                    runsCollection.Add(ClassifiedTextRun(PredefinedClassificationTypeNames.Other, System.String.Empty))
+                    flushRuns()
+                flushContainer()
+            | _ -> 
+                let newRun = ClassifiedTextRun(classificationTag, item.Text)
+                runsCollection.Add(newRun)   
+        flushRuns()
+        flushContainer()
+        ContainerElement(ContainerElementStyle.Stacked, finalCollection |> Seq.map box)
 
     /// If the XML comment starts with '<' not counting whitespace then treat it as a literal XML comment.
     /// Otherwise, escape it and surround it with <summary></summary>
@@ -210,28 +295,33 @@ module internal XmlDocumentation =
 
     type VsThreadToken() = class end
     let vsToken = VsThreadToken()
-    
+
+    type FSharpXmlDocumentationProvider(assemblyPath) =
+        inherit Microsoft.CodeAnalysis.XmlDocumentationProvider()
+        let xmlPath = Path.ChangeExtension(assemblyPath, ".xml")
+        let xmlExists = File.Exists xmlPath
+        member x.XmlPath = xmlPath
+        member x.GetDocumentation documentationCommentId =
+            match xmlExists with
+            | true ->
+                let xml = base.GetDocumentationForSymbol(documentationCommentId, Globalization.CultureInfo.CurrentCulture, CancellationToken.None)
+                xml
+            | false -> "<root></root>"
+
+        override x.GetSourceStream(_cancellationToken) =
+            new FileStream(xmlPath, FileMode.Open, FileAccess.Read) :> Stream
+
+        override x.Equals(obj) =
+            match obj with
+            | :? FSharpXmlDocumentationProvider as provider ->
+                provider.XmlPath = xmlPath
+            | _ ->
+                false
+
+        override x.GetHashCode() = xmlPath.GetHashCode()
+
     /// Provide Xml Documentation             
-    type Provider(xmlIndexService:IVsXMLMemberIndexService) = 
-        /// Index of assembly name to xml member index.
-        let cache = Dictionary<string, IVsXMLMemberIndex>()
-        
-        do Events.SolutionEvents.OnAfterCloseSolution.Add (fun _ -> cache.Clear())
-
-        /// Retrieve the pre-existing xml index or None
-        let GetMemberIndexOfAssembly(assemblyName) =
-            match cache.TryGetValue(assemblyName) with 
-            | true, memberIndex -> Some(memberIndex)
-            | false, _ -> 
-                let ok,memberIndex = xmlIndexService.CreateXMLMemberIndex(assemblyName)
-                if Com.Succeeded(ok) then 
-                    let ok = memberIndex.BuildMemberIndex()
-                    if Com.Succeeded(ok) then
-                        cache.Add(assemblyName, memberIndex)
-                        Some(memberIndex)
-                    else None
-                else None
-
+    type Provider() = 
         let AppendMemberData(xmlCollector: ITaggedTextCollector, exnCollector: ITaggedTextCollector, xmlDocReader: XmlDocReader, showExceptions, showParameters) =
             AppendHardLine xmlCollector
             xmlCollector.StartXMLDoc()
@@ -270,14 +360,7 @@ module internal XmlDocumentation =
                               paramName:string option                            
                              ) = 
                 try     
-                    match GetMemberIndexOfAssembly(filename) with
-                    | Some(index) ->
-                        let _,idx = index.ParseMemberSignature(signature)
-                        if idx <> 0u then
-                            let ok,xml = index.GetMemberXML(idx)
-                            if Com.Succeeded(ok) then 
-                                (this:>IDocumentationBuilder).AppendDocumentationFromProcessedXML(xmlCollector, exnCollector, xml, showExceptions, showParameters, paramName)
-                    | None -> ()
+                    (this:>IDocumentationBuilder).AppendDocumentationFromProcessedXML(xmlCollector, exnCollector, FSharpXmlDocumentationProvider(filename).GetDocumentation(signature), showExceptions, showParameters, paramName)
                 with e-> 
                     Assert.Exception(e)
                     reraise()    
@@ -286,7 +369,7 @@ module internal XmlDocumentation =
     let AppendXmlComment(documentationProvider:IDocumentationBuilder, xmlCollector: ITaggedTextCollector, exnCollector: ITaggedTextCollector, xml, showExceptions, showParameters, paramName) =
         match xml with
         | FSharpXmlDoc.None -> ()
-        | FSharpXmlDoc.XmlDocFileSignature(filename,signature) -> 
+        | FSharpXmlDoc.XmlDocFileSignature(filename,signature) ->
             documentationProvider.AppendDocumentation(xmlCollector, exnCollector, filename, signature, showExceptions, showParameters, paramName)
         | FSharpXmlDoc.Text(rawXml) ->
             let processedXml = ProcessXml(rawXml)
@@ -381,6 +464,7 @@ module internal XmlDocumentation =
     let BuildMethodParamText(documentationProvider, xmlCollector, xml, paramName) =
         AppendXmlComment(documentationProvider, TextSanitizingCollector(xmlCollector), TextSanitizingCollector(xmlCollector), xml, false, true, Some paramName)
 
-    let documentationBuilderCache = ConditionalWeakTable<IVsXMLMemberIndexService, IDocumentationBuilder>()
-    let CreateDocumentationBuilder(xmlIndexService: IVsXMLMemberIndexService) = 
-        documentationBuilderCache.GetValue(xmlIndexService,(fun _ -> Provider(xmlIndexService) :> IDocumentationBuilder))
+    //let documentationBuilderCache = ConditionalWeakTable<IVsXMLMemberIndexService, IDocumentationBuilder>()
+    let CreateDocumentationBuilder((*xmlIndexService: IVsXMLMemberIndexService*)) = 
+        //documentationBuilderCache.GetValue(xmlIndexService,(fun _ -> Provider((*xmlIndexService*)) :> IDocumentationBuilder))
+        Provider((*xmlIndexService*)) :> IDocumentationBuilder

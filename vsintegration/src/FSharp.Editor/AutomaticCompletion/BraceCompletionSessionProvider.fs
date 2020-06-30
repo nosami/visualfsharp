@@ -12,7 +12,6 @@ open Microsoft.VisualStudio.Text.BraceCompletion
 open Microsoft.VisualStudio.Text.Operations
 open Microsoft.VisualStudio.Text
 open Microsoft.VisualStudio.Text.Editor
-open Microsoft.VisualStudio.Utilities
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.Text
 open Microsoft.CodeAnalysis.Host
@@ -504,7 +503,7 @@ type EditorBraceCompletionSessionFactory() =
                 null
 
 [<Export(typeof<IBraceCompletionSessionProvider>)>]
-[<ContentType(FSharpConstants.FSharpContentTypeName)>]
+[<Microsoft.VisualStudio.Utilities.ContentType(FSharpConstants.FSharpContentTypeName)>]
 [<BracePair(Parenthesis.OpenCharacter, Parenthesis.CloseCharacter)>]
 [<BracePair(CurlyBrackets.OpenCharacter, CurlyBrackets.CloseCharacter)>]
 [<BracePair(SquareBrackets.OpenCharacter, SquareBrackets.CloseCharacter)>]

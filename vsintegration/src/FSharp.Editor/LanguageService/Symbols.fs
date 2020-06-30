@@ -16,7 +16,6 @@ open FSharp.Compiler.Ast
 open FSharp.Compiler.SourceCodeServices
 open System.IO
 
-
 [<RequireQualifiedAccess; NoComparison>] 
 type SymbolDeclarationLocation = 
     | CurrentDocument

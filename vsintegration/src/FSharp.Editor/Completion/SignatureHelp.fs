@@ -2,18 +2,12 @@
 
 namespace Microsoft.VisualStudio.FSharp.Editor
 
-open System
 open System.Composition
 open System.Collections.Generic
 
 open Microsoft.CodeAnalysis
-open Microsoft.CodeAnalysis.SignatureHelp
 open Microsoft.CodeAnalysis.Text
 open Microsoft.CodeAnalysis.ExternalAccess.FSharp.SignatureHelp
-
-open Microsoft.VisualStudio.Text
-open Microsoft.VisualStudio.Shell
-open Microsoft.VisualStudio.Shell.Interop
 
 open FSharp.Compiler.Layout
 open FSharp.Compiler.Range
@@ -24,19 +18,18 @@ open FSharp.Compiler.SourceCodeServices
 type internal FSharpSignatureHelpProvider 
     [<ImportingConstructor>]
     (
-        serviceProvider: SVsServiceProvider,
         checkerProvider: FSharpCheckerProvider,
         projectInfoManager: FSharpProjectOptionsManager
     ) =
 
     static let userOpName = "SignatureHelpProvider"
-    let documentationBuilder = XmlDocumentation.CreateDocumentationBuilder(serviceProvider.XMLMemberIndexService)
+    let documentationBuilder = XmlDocumentation.CreateDocumentationBuilder()
 
     static let oneColAfter (lp: LinePosition) = LinePosition(lp.Line,lp.Character+1)
     static let oneColBefore (lp: LinePosition) = LinePosition(lp.Line,max 0 (lp.Character-1))
 
     // Unit-testable core routine
-    static member internal ProvideMethodsAsyncAux(checker: FSharpChecker, documentationBuilder: IDocumentationBuilder, sourceText: SourceText, caretPosition: int, options: FSharpProjectOptions, triggerIsTypedChar: char option, filePath: string, textVersionHash: int) = async {
+    static member internal ProvideMethodsAsyncAux(checker:FSharpChecker, documentationBuilder: IDocumentationBuilder, sourceText: SourceText, caretPosition: int, options: FSharpProjectOptions, triggerIsTypedChar: char option, filePath: string, textVersionHash: int) = async {
         let! parseResults, checkFileAnswer = checker.ParseAndCheckFileInProject(filePath, textVersionHash, sourceText.ToFSharpSourceText(), options, userOpName = userOpName)
         match checkFileAnswer with
         | FSharpCheckFileAnswer.Aborted -> return None

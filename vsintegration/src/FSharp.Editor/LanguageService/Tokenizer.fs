@@ -441,7 +441,7 @@ module internal Tokenizer =
     let compilerTokenToRoslynToken(colorKind: FSharpTokenColorKind) : string = 
         match colorKind with
         | FSharpTokenColorKind.Comment -> ClassificationTypeNames.Comment
-        | FSharpTokenColorKind.Identifier -> ClassificationTypeNames.Identifier
+        | FSharpTokenColorKind.Identifier -> ClassificationTypeNames.LocalName
         | FSharpTokenColorKind.Keyword -> ClassificationTypeNames.Keyword
         | FSharpTokenColorKind.String -> ClassificationTypeNames.StringLiteral
         | FSharpTokenColorKind.Text -> ClassificationTypeNames.Text

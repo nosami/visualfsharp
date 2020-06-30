@@ -59,10 +59,11 @@ type internal FSharpReplaceWithSuggestionCodeFixProvider
                 let replacement = Keywords.QuoteIdentifierIfNeeded suggestion
                 let codeFix =
                     CodeFixHelpers.createTextChangeCodeFix(
-                        CompilerDiagnostics.getErrorMessage (ReplaceWithSuggestion suggestion),
+                        suggestion,
+                        //CompilerDiagnostics.getErrorMessage (ReplaceWithSuggestion suggestion),
                         context,
                         (fun () -> asyncMaybe.Return [| TextChange(context.Span, replacement) |]))
-                
+
                 context.RegisterCodeFix(codeFix, diagnostics)
         }
         |> Async.Ignore

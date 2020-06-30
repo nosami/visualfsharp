@@ -14,7 +14,7 @@ open Microsoft.CodeAnalysis.ExternalAccess.FSharp.Editor
 
 open FSharp.Compiler.SourceCodeServices
 open System.Threading
-open System.Windows.Forms
+//open System.Windows.Forms
 
 [<Export(typeof<IFSharpEditorFormattingService>)>]
 type internal FSharpEditorFormattingService
@@ -189,7 +189,7 @@ type internal FSharpEditorFormattingService
             |> RoslynHelpers.StartAsyncAsTask cancellationToken
 
         override this.GetFormattingChangesOnPasteAsync (document, span, cancellationToken) =
-            let currentClipboard = Clipboard.GetText()
+            let currentClipboard = System.Windows.Clipboard.GetDataObject().GetData(System.Windows.DataFormats.Text) :?> string
 
             this.OnPasteAsync (document, span, currentClipboard, cancellationToken)
             |> RoslynHelpers.StartAsyncAsTask cancellationToken

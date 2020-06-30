@@ -1,0 +1,33 @@
+
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FSharp.Editor", "FSharp.Editor.fsproj", "{3F4888DE-589A-4DD6-84CC-DDBE6F87A72C}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{4A2F4F15-F535-4A18-B36C-F1F9080B6794}"
+	ProjectSection(SolutionItems) = preProject
+		..\Directory.Build.props = ..\Directory.Build.props
+		..\..\..\FSharp.Profiles.props = ..\..\..\FSharp.Profiles.props
+		..\..\..\FSharpBuild.Directory.Build.props = ..\..\..\FSharpBuild.Directory.Build.props
+		..\..\..\global.json = ..\..\..\global.json
+		..\..\..\NuGet.config = ..\..\..\NuGet.config
+		..\..\..\restore.sh = ..\..\..\restore.sh
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Proto|Any CPU = Proto|Any CPU
+		DebugMac|Any CPU = DebugMac|Any CPU
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{3F4888DE-589A-4DD6-84CC-DDBE6F87A72C}.Proto|Any CPU.ActiveCfg = Proto|Any CPU
+		{3F4888DE-589A-4DD6-84CC-DDBE6F87A72C}.Proto|Any CPU.Build.0 = Proto|Any CPU
+		{3F4888DE-589A-4DD6-84CC-DDBE6F87A72C}.DebugMac|Any CPU.ActiveCfg = DebugMac|Any CPU
+		{3F4888DE-589A-4DD6-84CC-DDBE6F87A72C}.DebugMac|Any CPU.Build.0 = DebugMac|Any CPU
+		{3F4888DE-589A-4DD6-84CC-DDBE6F87A72C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3F4888DE-589A-4DD6-84CC-DDBE6F87A72C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3F4888DE-589A-4DD6-84CC-DDBE6F87A72C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3F4888DE-589A-4DD6-84CC-DDBE6F87A72C}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

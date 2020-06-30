@@ -19,7 +19,7 @@ open FSharp.Compiler.SourceCodeServices
 
 type internal XmlDocCommandFilter 
      (
-        wpfTextView: IWpfTextView, 
+        wpfTextView: ICocoaTextView, 
         filePath: string, 
         checkerProvider: FSharpCheckerProvider,
         projectInfoManager: FSharpProjectOptionsManager,
@@ -126,7 +126,7 @@ type internal XmlDocCommandFilterProvider
      workspace: VisualStudioWorkspaceImpl,
      textDocumentFactoryService: ITextDocumentFactoryService,
      editorFactory: IVsEditorAdaptersFactoryService) =
-    interface IWpfTextViewCreationListener with
+    interface ICocoaTextViewCreationListener with
         member __.TextViewCreated(textView) = 
             match editorFactory.GetViewAdapter(textView) with
             | null -> ()

@@ -1,0 +1,246 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<ExtensionModel>
+    <Runtime>
+        <Import assembly="FSharp.Editor.dll" />
+        <Import file = "VSMac/templates/EmptyFSharpSource.xft.xml" />
+        <Import file = "VSMac/templates/EmptyFSharpScript.xft.xml" />
+        <Import file = "VSMac/templates/EmptyFSharpSignature.xft.xml" />
+        <Import file = "VSMac/templates/FSharpConsoleProject.xpt.xml" />
+        <Import file = "VSMac/templates/FSharpLibraryProject.xpt.xml" />
+        <Import file = "VSMac/templates/FSharpTutorialProject.xpt.xml" />
+        <Import file = "VSMac/templates/FSharpGtkProject.xpt.xml" />
+        <Import file = "VSMac/templates/AssemblyInfo.xft.xml" />
+        <Import file = "VSMac/templates/FSharpNUnitLibraryProject.xpt.xml" />
+        <Import file = "VSMac/templates/FSharpNUnitTestType.xft.xml" />
+        <Import file = "VSMac/templates/PortableLibrary.xpt.xml" />
+        <Import file = "VSMac/templates/SharedAssetsProject.xpt.xml" />
+
+        <!-- Code VSMac/templates -->
+        <Import file = "VSMac/templates/FSharp-templates.xml" />
+
+        <ScanExclude path="ExtCore.dll" />
+        <ScanExclude path="FSharp.Compiler.CodeDom.dll" />
+        <ScanExclude path="FSharp.Compiler.Interactive.Settings.dll" />
+        <ScanExclude path="FSharp.Core.dll" />
+        <ScanExclude path="Fantomas.dll" />
+        <ScanExclude path="System.Buffers.dll" />
+    </Runtime>
+    <Extension path="/MonoDevelop/Ide/Composition">
+        <Assembly file="FSharp.Editor.dll"/>
+        <Assembly file="Microsoft.CodeAnalysis.ExternalAccess.FSharp.dll"/>
+    </Extension>
+
+    <Extension path = "/MonoDevelop/Ide/ProjectTemplatePackageRepositories">
+        <PackageRepository path="Packages" />
+    </Extension>
+
+    <Extension path="/MonoDevelop/ProjectModel/MSBuildItemTypes">
+        <DotNetProjectType language="F#" extension="fsproj" guid="{F2A71F9B-5D33-465A-A702-920D77279786}" type="MonoDevelop.FSharp.FSharpProject"/>
+    </Extension>
+
+    <Extension path = "/MonoDevelop/ProjectModel/ProjectModelExtensions">
+        <Condition id="MSBuildTargetIsAvailable" target="$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\3.1\Framework\v4.0\Microsoft.Portable.FSharp.Targets">
+            <ProjectFlavor guid="{786c830f-07a1-408b-bd7f-6ee04809d6db}" type="FSharp.Editor.PortableFSharpProjectFlavor" language="F#" alias="F#PortableLibrary"/>
+        </Condition>
+    </Extension>
+
+    <Extension path="/MonoDevelop/Core/MimeTypes">
+        <MimeType id="text/x-fsharp" _description="F# Source File" icon="md-file-source" isText="true">
+            <File pattern="*.fs" />
+        </MimeType>
+        <MimeType id="text/x-fsharp" _description="F# Script File" icon="md-file-source" isText="true">
+            <File pattern="*.fsx" />
+            <File pattern="*.fsscript" />
+        </MimeType>
+        <MimeType id="text/x-fsharp" _description="F# Signature File" icon="md-file-header" isText="true">
+            <File pattern="*.fsi" />
+        </MimeType>
+        <MimeType id="application/fsproject+xml" _description="F# project file" baseType="application/xml">
+            <File pattern="*.fsproj" />
+        </MimeType>
+    </Extension>
+    <Extension path="/MonoDevelop/ProjectModel/LanguageBindings">
+        <LanguageBinding id="F#"
+                         extensions=".fs,.fsi,.fsx,.fsscript,.sketchfs"
+                         singleLineCommentTag="//"
+                         blockCommentStartTag="(*"
+                         blockCommentEndTag="*)" />
+<!--                     codeDomType="FSharp.Compiler.CodeDom.FSharpCleanCodeProvider" />-->
+    </Extension>
+
+    <Extension path="/MonoDevelop/Ide/Pads">
+        <ComplexCondition>
+            <Or>
+                <Condition id="MSBuildTargetIsAvailable" target="$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\3.0\Framework\v4.0\Microsoft.FSharp.Targets" />
+                <Condition id="MSBuildTargetIsAvailable" target="$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\3.1\Framework\v4.0\Microsoft.FSharp.Targets" />
+                <Condition id="MSBuildTargetIsAvailable" target="$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\4.0\Framework\v4.0\Microsoft.FSharp.Targets" />
+            </Or>
+            <Pad id="FSharp.Editor.FSharpInteractivePad" defaultPlacement="Bottom" _label="F# Interactive" icon="md-project" class="Microsoft.VisualStudio.FSharp.Editor.FSharpInteractivePad" />
+        </ComplexCondition>
+    </Extension>
+    <Extension path="/MonoDevelop/Ide/Commands">
+        <!-- RefactoryCommands -->
+    <!--
+    <Category _name = "Refactoring" id = "Refactoring" >
+      <Command id = "MonoDevelop.FSharp.CurrentRefactoringOperations"
+               defaultHandler = "MonoDevelop.FSharp.CurrentRefactoringOperationsHandler"
+               type="array"
+               _label = "Refactoring Operations" />
+    </Category>
+    <ComplexCondition>
+      <Or>
+        <Condition id="MSBuildTargetIsAvailable" target="$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\3.0\Framework\v4.0\Microsoft.FSharp.Targets" />
+        <Condition id="MSBuildTargetIsAvailable" target="$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\3.1\Framework\v4.0\Microsoft.FSharp.Targets" />
+        <Condition id="MSBuildTargetIsAvailable" target="$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\4.0\Framework\v4.0\Microsoft.FSharp.Targets" />
+      </Or>
+      -->
+      <Category _name = "F# Integration" id="F# Integration">
+<!--        <Command id="MonoDevelop.FSharp.FSharpCommands.ShowFSharpInteractive"
+                 _label = "F# Interactive"
+                 type="check"
+                 _description="Show F# Interactive pad."
+                 macShortcut="Control|Alt|F"
+                 defaultHandler="MonoDevelop.FSharp.ShowFSharpInteractive" />
+
+-->
+        <Command id="Microsoft.VisualStudio.FSharp.Editor.FSharpCommands.SendFile"
+                 _label = "Send current file to F# Interactive"
+                 _description="Send the current file to F# Interactive"
+                 macShortcut=""
+                 defaultHandler="Microsoft.VisualStudio.FSharp.Editor.SendFile" />
+
+        <Command id="Microsoft.VisualStudio.FSharp.Editor.FSharpCommands.SendSelection"
+                 _label = "Send selection to F# Interactive"
+                 _description="Send the selected text to F# Interactive"
+                 macShortcut="Ctrl|Return"
+                 defaultHandler="Microsoft.VisualStudio.FSharp.Editor.SendSelection" />
+
+        <Command id="Microsoft.VisualStudio.FSharp.Editor.FSharpCommands.SendLine"
+                 _label = "Send line to F# Interactive"
+                 _description="Send the current line to F# Interactive"
+                 macShortcut="Ctrl|Alt|L"
+                 defaultHandler="Microsoft.VisualStudio.FSharp.Editor.SendLine" />
+
+        <Command _description="Send the current project references to F# Interactive"
+                 _label="Send references to F# Interactive"
+                 defaultHandler="Microsoft.VisualStudio.FSharp.Editor.SendReferences"
+                 id="Microsoft.VisualStudio.FSharp.Editor.FSharpCommands.SendReferences"
+                 macShortcut="Ctrl|Alt|P" />
+
+        <Command _description="Restart F# Interactive"
+                 _label="Restart F# Interactive"
+                 defaultHandler="Microsoft.VisualStudio.FSharp.Editor.RestartFsi"
+                 id="Microsoft.VisualStudio.FSharp.Editor.FSharpCommands.RestartFsi"
+                 macShortcut="Ctrl|Alt|R" />
+
+        <Command _description="Clear F# Interactive"
+                 _label="Clear F# Interactive"
+                 defaultHandler="Microsoft.VisualStudio.FSharp.Editor.ClearFsi"
+                 id="Microsoft.VisualStudio.FSharp.Editor.FSharpCommands.ClearFsi"
+                 macShortcut="Ctrl|Alt|C" />
+                 <!--
+        <Command _description="Start debugging an .fsx script"
+                 _label="Start Debugging"
+                 id="MonoDevelop.FSharp.SolutionPad.DebugScriptInternal" />
+        <Command _description="Start debugging an .fsx script"
+                 _label="Start Debugging on External Console"
+                 id="MonoDevelop.FSharp.SolutionPad.DebugScriptExternal" />
+        <Command _description="Start debugging an .fsx script"
+                 _label="Start Debugging"
+                 id="MonoDevelop.FSharp.Editor.DebugScriptInternal" />
+        <Command _description="Start debugging an .fsx script"
+                 _label="Start Debugging on External Console"
+
+                 id="MonoDevelop.FSharp.Editor.DebugScriptExternal" />
+        <Command _description="Toggle type signature help"
+                 _label="Toggle type signature help"
+                 id="MonoDevelop.FSharp.SignatureHelp.Toggle" />
+
+        <Command _description="Quick Fix Menu"
+                 id="MonoDevelop.FSharp.QuickFixMenu"
+                 _label="Quick Fix"
+                 type = "array"
+                 defaultHandler = "MonoDevelop.FSharp.QuickFixMenuHandler" />
+      </Category>
+    </ComplexCondition>
+    -->
+      </Category>
+    </Extension>
+    <Extension path = "/MonoDevelop/Ide/Pads/ProjectPad">
+        <NodeBuilder class = "MonoDevelop.FSharp.FSharpProjectFileNodeExtension"/>
+        <!-- <NodeBuilder class = "MonoDevelop.FSharp.DebugScriptBuilder"/> -->
+    </Extension>
+    <Extension path="/MonoDevelop/Ide/SearchCategories">
+        <Class class="MonoDevelop.FSharp.ProjectSearchCategory" />
+    </Extension>
+    <Extension path = "/MonoDevelop/TextEditor/ContextMenu/Editor">
+        <Condition id="FileType" fileExtensions=".fs,.fsi,.fsx">
+<!--            <ItemSet id = "MonoDevelop.FSharp.QuickFixMenu" _label = "Quick Fix" autohide = "true" insertafter="MonoDevelop.SourceEditor.SourceEditorCommands.MarkerOperations" insertbefore="MonoDevelop.Debugger.DebugCommands.ExpressionEvaluator">
+                <CommandItem id = "MonoDevelop.FSharp.QuickFixMenu" />
+            </ItemSet>
+            <SeparatorItem id = "FSharpScriptDebug" />
+            <CommandItem id = "MonoDevelop.FSharp.Editor.DebugScriptInternal" />
+            <CommandItem id = "MonoDevelop.FSharp.Editor.DebugScriptExternal" />
+            <SeparatorItem id = "FSharpInteractiveStart" />-->
+            <CommandItem id = "Microsoft.VisualStudio.FSharp.Editor.FSharpCommands.SendSelection" />
+            <CommandItem id = "Microsoft.VisualStudio.FSharp.Editor.FSharpCommands.SendLine" />
+            <CommandItem id = "Microsoft.VisualStudio.FSharp.Editor.FSharpCommands.SendFile" />
+            <CommandItem id = "Microsoft.VisualStudio.FSharp.Editor.FSharpCommands.SendReferences" />
+        </Condition>
+    </Extension>
+
+    <ExtensionPoint path = "/MonoDevelop/TextEditor/ContextMenu/Fsi" name = "Editor context menu for fsi">
+        <Description>Context menu for fsi</Description>
+        <ExtensionNodeSet id="MonoDevelop.Components.Commands.ItemSet" />
+    </ExtensionPoint>
+
+    <Extension path = "/MonoDevelop/TextEditor/ContextMenu/Fsi">
+        <CommandItem id = "MonoDevelop.FSharp.FSharpCommands.ClearFsi" />
+        <CommandItem id = "MonoDevelop.FSharp.FSharpCommands.RestartFsi" />
+        <SeparatorItem id = "Separator1" />
+        <CommandItem id = "MonoDevelop.Ide.Commands.EditCommands.Cut" />
+        <CommandItem id = "MonoDevelop.Ide.Commands.EditCommands.Copy" />
+        <CommandItem id = "MonoDevelop.Ide.Commands.EditCommands.Paste" />
+    </Extension>
+
+    <Extension path="/MonoDevelop/Ide/FileTemplates">
+        <FileTemplate id="EmptyFSharpSource" file="VSMac/templates/EmptyFSharpSource.xft.xml"/>
+        <FileTemplate id="EmptyFSharpScript" file="VSMac/templates/EmptyFSharpScript.xft.xml"/>
+        <FileTemplate id="EmptyFSharpSignature" file="VSMac/templates/EmptyFSharpSignature.xft.xml"/>
+        <FileTemplate id="FSharpAssemblyInfo" file="VSMac/templates/AssemblyInfo.xft.xml" />
+        <FileTemplate id="FSharpNUnitTestType" file="VSMac/templates/FSharpNUnitTestType.xft.xml" />
+    </Extension>
+
+    <Extension path="/MonoDevelop/Ide/ProjectTemplates">
+        <ProjectTemplate id="MonoDevelop.FSharp.ConsoleProject" file="VSMac/templates/FSharpConsoleProject.xpt.xml"/>
+        <ProjectTemplate id="MonoDevelop.FSharp.LibraryProject" file="VSMac/templates/FSharpLibraryProject.xpt.xml"/>
+        <!-- Only include the tutorial project if an F# 3.0 or 3.1 target is available as this includes F# 3.0 specific features -->
+        <ComplexCondition>
+            <Or>
+                <Condition id="MSBuildTargetIsAvailable" target="$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\3.0\Framework\v4.0\Microsoft.FSharp.Targets" />
+                <Condition id="MSBuildTargetIsAvailable" target="$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\3.1\Framework\v4.0\Microsoft.FSharp.Targets" />
+                <Condition id="MSBuildTargetIsAvailable" target="$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\4.0\Framework\v4.0\Microsoft.FSharp.Targets" />
+            </Or>
+            <ProjectTemplate id="MonoDevelop.FSharp.TutorialProject" file="VSMac/templates/FSharpTutorialProject.xpt.xml"/>
+        </ComplexCondition>
+
+        <ProjectTemplate id="FSharpNUnitLibraryProject" file="VSMac/templates/FSharpNUnitLibraryProject.xpt.xml"/>
+
+        <Condition id="MSBuildTargetIsAvailable" target="$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\3.1\Framework\v4.0\Microsoft.Portable.FSharp.Targets" >
+            <ProjectTemplate id="FSharpPortableLibrary" file = "VSMac/templates/PortableLibrary.xpt.xml" />
+            <ProjectTemplate id="FSharpSharedAssetsProject" file = "VSMac/templates/SharedAssetsProject.xpt.xml" />
+        </Condition>
+    </Extension>
+
+    <Extension path = "/MonoDevelop/ProjectModel/Gui/ItemOptionPanels/Build/Compiler">
+        <Condition id="ActiveLanguage" value="F#">
+            <Panel id = "FSharpCodeGenerationPanel" _label = "Compiler" class = "MonoDevelop.FSharp.CodeGenerationPanel"/>
+        </Condition>
+    </Extension>
+
+    <Extension path = "/MonoDevelop/ProjectModel/Gui/ItemOptionPanels/Build/General">
+        <Condition id="ProjectTypeId" value="F#">
+            <Panel id = "FSharpCompilerOptionsPanel" _label = "F#" class = "MonoDevelop.FSharp.FSharpProjectCompilerOptionsPanel"/>
+        </Condition>
+    </Extension>
+</ExtensionModel>
