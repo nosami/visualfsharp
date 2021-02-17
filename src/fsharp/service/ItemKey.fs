@@ -15,9 +15,7 @@ open FSharp.Compiler.Infos
 open FSharp.Compiler.NameResolution
 open FSharp.Compiler.Range
 open FSharp.Compiler.TypedTree
-open FSharp.Compiler.TypedTreeOps
 open FSharp.Compiler.TypedTreeBasics
-open FSharp.Compiler.TcGlobals
 
 #nowarn "9"
 
@@ -410,7 +408,7 @@ and [<Sealed>] ItemKeyStoreBuilder() =
         fixup.WriteInt32(postCount - preCount)
 
     member _.TryBuildAndReset() =
-        if b.Count > 0 then
+        if b.Count > 0 && false then
             let length = int64 b.Count
             let mmf = 
                 let mmf =
