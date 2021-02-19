@@ -156,6 +156,9 @@ type ItemKeyStore(mmf: MemoryMappedFile, length) =
             mmf.Dispose()
 
 and [<Sealed>] ItemKeyStoreBuilder() =
+    let runningOnMono = try System.Type.GetType("Mono.Runtime") <> null with e -> false
+
+    let mapName = if runningOnMono then "FCS-ItemKeyStoreBuilder" else null
 
     let b = BlobBuilder()
 
@@ -413,7 +416,7 @@ and [<Sealed>] ItemKeyStoreBuilder() =
             let mmf = 
                 let mmf =
                     MemoryMappedFile.CreateNew(
-                        null, 
+                        mapName,
                         length, 
                         MemoryMappedFileAccess.ReadWrite, 
                         MemoryMappedFileOptions.None, 
